@@ -64,7 +64,7 @@ const start = async () => {
     [1.1, -0.01, 0]
   ];
 
-const videoFiles = ["/video1.mp4", "/video2.mp4", "/video3.mp4", "/video4.mp4"];
+  const videoFiles = ["/video1.mp4", "/video2.mp4", "/video3.mp4", "/video4.mp4"];
 
   const videoPlanes = [];
 
