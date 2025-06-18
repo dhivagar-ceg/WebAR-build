@@ -3,13 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <title>WebAR Business Card</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <style>
-    body { margin: 0; overflow: hidden; }
-    #ar-container { width: 100vw; height: 100vh; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: black;
+    }
+
+    #ar-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      touch-action: none;
+    }
   </style>
 </head>
 <body>
   <div id="ar-container"></div>
+
+  <!-- Fix for mobile vh issue -->
+  <script>
+    const container = document.getElementById('ar-container');
+    const updateSize = () => {
+      container.style.height = `${window.innerHeight}px`;
+    };
+    window.addEventListener('resize', updateSize);
+    updateSize();
+  </script>
+
   <script type="module" src="./main.js"></script>
 </body>
 </html>
