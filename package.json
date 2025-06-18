@@ -1,4 +1,15 @@
 {
+  "name": "webar-build",
+  "version": "1.0.0",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+
   "name": "mindar-business-card",
   "version": "1.0.0",
   "scripts": {
