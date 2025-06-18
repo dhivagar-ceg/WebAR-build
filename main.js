@@ -5,40 +5,66 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 const start = async () => {
   const mindarThree = new MindARThree({
     container: document.querySelector("#ar-container"),
-    imageTargetSrc: "./target.mind",
+    imageTargetSrc: "./Card.mind",
   });
 
   const { renderer, scene, camera } = mindarThree;
+
+  // ✅ Add lighting for GLB model
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+  scene.add(ambientLight);
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(0, 2, 2);
+  scene.add(directionalLight);
+
+  // ✅ Tone mapping for better lighting
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1;
+
   const anchor = mindarThree.addAnchor(0);
 
-  // Load central logo
-  const loader = new THREE.TextureLoader();
-  const logoTexture = await loader.loadAsync("./target-image.png");
-
-  const logoPlane = new THREE.Mesh(
-    new THREE.PlaneGeometry(1, 0.6),
-    new THREE.MeshBasicMaterial({ map: logoTexture, transparent: true })
-  );
-  anchor.group.add(logoPlane);
-
-  // Load GLB 3D model
   const gltfLoader = new GLTFLoader();
-  gltfLoader.load("./avatar.glb", (gltf) => {
-    const model = gltf.scene;
-    model.scale.set(0.5, 0.5, 0.5); // Adjust scale as needed
-    model.position.set(0, 0.6, 0);  // Above logo
-    anchor.group.add(model);
+  const gltf = await gltfLoader.loadAsync("./talk.glb");
+
+  const avatar = gltf.scene;
+  avatar.scale.set(0.4, 0.4, 0.4);
+  avatar.position.set(-0.5, 0, 0);
+  avatar.rotation.x = Math.PI / 2;
+
+  // ✅ Do not override materials — just ensure shadows
+  avatar.traverse((child) => {
+    if (child.isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+      child.material.needsUpdate = true;
+    }
   });
 
-  // Videos and screen positions
-  const videoFiles = ["video1.mp4", "video2.mp4", "video3.mp4", "video4.mp4"];
-  const positions = [
-    [-1.2, 0.7, 0],   // Top-left
-    [1.2, 0.7, 0],    // Top-right
-    [-1.2, -0.7, 0],  // Bottom-left
-    [1.2, -0.7, 0]    // Bottom-right
+  anchor.group.add(avatar);
+
+  // ✅ Animation setup
+  const mixer = new THREE.AnimationMixer(avatar);
+  const idleClip = THREE.AnimationClip.findByName(gltf.animations, "Armature.001|mixamo.com|Layer0");
+
+  if (!idleClip) {
+    console.error("Idle animation not found.");
+    return;
+  }
+
+  const idleAction = mixer.clipAction(idleClip);
+  idleAction.play();
+
+  // ✅ Video planes
+  const videoPositions = [
+    [-0.5, 0.65, 0],
+    [0.5, 0.65, 0],
+    [-1.1, -0.01, 0],
+    [1.1, -0.01, 0]
   ];
 
+  const videoFiles = ["video1.mp4", "video2.mp4", "video3.mp4", "video4.mp4"];
   const videoPlanes = [];
 
   for (let i = 0; i < videoFiles.length; i++) {
@@ -56,35 +82,71 @@ const start = async () => {
       new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
     );
 
-    plane.position.set(...positions[i]);
+    plane.position.set(...videoPositions[i]);
     plane.visible = true;
     anchor.group.add(plane);
-
     videoPlanes.push({ plane, video });
   }
 
-  // Play videos one-by-one in a loop
-  let currentIndex = 0;
-  const playNextVideo = () => {
-    videoPlanes.forEach(({ video }) => {
-      video.pause();
-      video.currentTime = 0;
-    });
+  // ✅ Avatar teleport positions matching screen layout
+  const avatarPositions = [
+    [-1.6, 0.8, 0],  // Top-left
+    [0.5, 0.8, 0],   // Top-right
+    [-1.1, 0, 0], // Middle-left
+    [1.1, 0, 0]   // Middle-right
+  ];
 
-    const { video } = videoPlanes[currentIndex];
-    video.play();
-    video.onended = () => {
-      currentIndex = (currentIndex + 1) % videoPlanes.length;
-      playNextVideo();
-    };
+  let audio = new Audio("welcome.mp3");
+
+  const runSequence = async () => {
+    idleAction.reset().play();
+    audio.play();
+
+    await new Promise(res => setTimeout(res, 20000)); // Wait 20 sec
+
+    for (let i = 0; i < avatarPositions.length; i++) {
+      avatar.position.set(...avatarPositions[i]);
+
+      videoPlanes.forEach(({ video }, index) => {
+        if (index === i) {
+          video.currentTime = 0;
+          video.play().catch(err => console.warn("Video play error:", err));
+        } else {
+          video.pause();
+        }
+      });
+
+      await new Promise(res => {
+        const currentVideo = videoPlanes[i].video;
+        if (currentVideo.ended || currentVideo.duration === currentVideo.currentTime) {
+          res();
+        } else {
+          currentVideo.onended = () => res();
+        }
+      });
+    }
   };
 
   anchor.onTargetFound = () => {
-    playNextVideo();
+    runSequence();
+  };
+
+  anchor.onTargetLost = () => {
+    audio.pause();
+    audio.currentTime = 0;
+    videoPlanes.forEach(({ video }) => {
+      video.pause();
+    });
   };
 
   await mindarThree.start();
-  renderer.setAnimationLoop(() => renderer.render(scene, camera));
+
+  const clock = new THREE.Clock();
+  renderer.setAnimationLoop(() => {
+    const delta = clock.getDelta();
+    mixer.update(delta);
+    renderer.render(scene, camera);
+  });
 };
 
 start();
