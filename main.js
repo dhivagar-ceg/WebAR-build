@@ -5,7 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 const start = async () => {
   const mindarThree = new MindARThree({
     container: document.querySelector("#ar-container"),
-    imageTargetSrc: "./Card.mind",
+    imageTargetSrc: "/Card.mind",
   });
 
   const { renderer, scene, camera } = mindarThree;

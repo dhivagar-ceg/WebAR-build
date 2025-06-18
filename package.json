@@ -5,26 +5,17 @@
     "node": "20.x"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-
-  "name": "mindar-business-card",
-  "version": "1.0.0",
-  "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
-  },
-  "dependencies": {
-    "mind-ar": "^1.1.5",
-    "three": "^0.152.2"
   },
   "main": "main.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
-
+  "description": "",
+  "dependencies": {
+    "mind-ar": "^1.2.5",
+    "three": "^0.152.2"
+  }
 }
