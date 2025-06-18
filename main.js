@@ -26,7 +26,7 @@ const start = async () => {
   const anchor = mindarThree.addAnchor(0);
 
   const gltfLoader = new GLTFLoader();
-  const gltf = await gltfLoader.loadAsync("./Man.glb");
+  const gltf = await gltfLoader.loadAsync("./talk.glb");
 
   const avatar = gltf.scene;
   avatar.scale.set(0.4, 0.4, 0.4);
