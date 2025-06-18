@@ -1,0 +1,12 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "framework": "other",
+  "installCommand": "npm install",
+  "outputDirectory": "dist",
+  "build": {
+    "env": {
+      "NODE_VERSION": "18"
+    }
+  }
+}
